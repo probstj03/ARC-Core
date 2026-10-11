@@ -24,6 +24,7 @@ struct Config {
     int dacBck, dacLrck, dacDin, dacMute;   // PCM5102 (XSMT: HIGH = on)
     int ltcIn;
     uint32_t sampleRate = 48000;
+    uint8_t ltcChannels = 3;                // bit 0 = left, bit 1 = right (internal output)
 };
 
 struct JamStatus {
@@ -79,6 +80,9 @@ float phaseErrorUs();            // last generator phase error
 // task; the device renders generator() into its stream and reports writes to
 // outputClock().
 void setExternalOutput(bool external);
+bool internalOutputStopped();    // the internal I2S driver is uninstalled (external may start)
+// Output sample index that reaches the DAC at wall-clock `wallNs` (uses the calibrated latency).
+double sampleIndexAtWall(int64_t wallNs);
 LtcGenerator& generator();
 OutputClock& outputClock();
 void setMuted(bool muted);       // device-level mute request (e.g. upload)

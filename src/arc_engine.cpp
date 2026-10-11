@@ -97,7 +97,7 @@ void saveLatencyIfNeeded() {
 
 // Own output heard on J2: compare the observed frame boundary with the timeline.
 void loopbackSample(const DecodedFrame& f) {
-    if (!isGenMode(s_mode) || s_jam.muteHeld || s_userMute || s_external) return;
+    if (!isGenMode(s_mode) || s_jam.muteHeld || s_userMute) return;
     const Timeline tl = s_gen.timeline();
     if (tl.rate != f.rate) return;
     const int64_t observed = clock::wallNsAtEsp(f.endEspUs);
@@ -115,11 +115,14 @@ void loopbackSample(const DecodedFrame& f) {
     const int64_t med = medianOf(tmp, 25);
     s_loopCount = 0;
     // Output is late by `med` µs -> the generator has to start earlier.
-    float lat = s_latencyUs + 0.5f * (float)med;
+    float lat = (float)s_gen.latencyUs() + 0.5f * (float)med;
     if (lat < 2000.0f) lat = 2000.0f;
-    if (lat > 80000.0f) lat = 80000.0f;
-    s_latencyUs = lat;
+    if (lat > 120000.0f) lat = 120000.0f;
     s_gen.setLatencyUs(lat);
+    // Only the internal 48 kHz path is stored; an external output (ARC-Play
+    // playback) has its own buffers and is tracked live only.
+    if (s_external) return;
+    s_latencyUs = lat;
     if (llabs(med) < 60) { if (++s_loopGoodRounds >= 3) s_latCalibrated = true; }
     else s_loopGoodRounds = 0;
 }
@@ -280,8 +283,12 @@ void outTask(void*) {
             s_gen.setLatencyUs(s_latencyUs);
         }
         s_gen.render(mono, 256, written, s_clk);
-        // LTC on both channels: independent of the DAC channel routed to J2.
-        for (int i = 0; i < 256; i++) { stereo[2 * i] = mono[i]; stereo[2 * i + 1] = mono[i]; }
+        // Channel mask from the device config (slate: both, play: right = J2).
+        const bool left = s_cfg.ltcChannels & 1, right = s_cfg.ltcChannels & 2;
+        for (int i = 0; i < 256; i++) {
+            stereo[2 * i] = left ? mono[i] : 0;
+            stereo[2 * i + 1] = right ? mono[i] : 0;
+        }
         size_t bytes = 0;
         i2s_write(I2S_NUM_0, stereo, sizeof(stereo), &bytes, portMAX_DELAY);
         written += bytes / 4;
@@ -510,6 +517,12 @@ bool latencyCalibrated() { return s_latCalibrated; }
 float phaseErrorUs() { return (float)s_gen.lastPhaseErrorUs(); }
 
 void setExternalOutput(bool external) { s_external = external; }
+bool internalOutputStopped() { return s_external && !s_driverInstalled; }
+
+double sampleIndexAtWall(int64_t wallNs) {
+    const double espOut = (double)clock::espUsAtWall(wallNs);
+    return s_clk.sampleAtEspUs(espOut - s_gen.latencyUs());
+}
 LtcGenerator& generator() { return s_gen; }
 OutputClock& outputClock() { return s_clk; }
 

@@ -26,6 +26,8 @@ public:
     void onWrite(uint64_t framesWritten, int64_t espUsAfterWrite);
     bool valid() const { return _valid; }
     double espUsOfSample(uint64_t n) const;   // without output latency
+    // Inverse: output sample index that is written at esp time `espUs` (may be fractional).
+    double sampleAtEspUs(double espUs) const;
     double sampleRate() const { return _fs; }
     double measuredRate() const;              // samples per second (fit)
 

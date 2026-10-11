@@ -74,6 +74,11 @@ double OutputClock::espUsOfSample(uint64_t n) const {
     return _a + ((double)(int64_t)(n - _n0)) * _c;
 }
 
+double OutputClock::sampleAtEspUs(double espUs) const {
+    if (_c <= 0) return 0;
+    return (double)_n0 + (espUs - _a) / _c;
+}
+
 double OutputClock::measuredRate() const { return _c > 0 ? 1e6 / _c : _fs; }
 
 // ── LtcGenerator ──────────────────────────────────────────────────────────
