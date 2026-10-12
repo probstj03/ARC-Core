@@ -102,15 +102,22 @@ String isoTimestamp(int64_t wallNs) {
 
 void fillStatus(JsonDocument& doc, const char* type) {
     const int64_t now = clock::nowNs();
-    int64_t into = 0;
-    const Timecode tc = engine::timecodeAt(now, into);
-    char tcs[12];
-    formatTc(tc, tcs);
     doc["type"] = type;
     doc["device"] = s_cfg.device;
     doc["id"] = s_deviceId;
     doc["proto"] = 2;
     doc["fw"] = s_cfg.firmware;
+    if (!s_cfg.ltcEngine) {
+        doc["timestamp"] = isoTimestamp(now);
+        doc["rtcUs"] = now / 1000;
+        doc["sqw"] = clock::sqwActive();
+        if (s_cfg.fillStatus) s_cfg.fillStatus(doc);
+        return;
+    }
+    int64_t into = 0;
+    const Timecode tc = engine::timecodeAt(now, into);
+    char tcs[12];
+    formatTc(tc, tcs);
     doc["gen_mode"] = engine::modeKey(engine::mode());
     doc["tc_mode"] = rateKey(engine::rate());
     doc["running"] = engine::running();
@@ -164,6 +171,11 @@ int64_t atNs(JsonDocument& doc) {
 
 void handleCommand(JsonDocument& doc) {
     const String cmd = doc["cmd"] | "";
+    if (!s_cfg.ltcEngine) {
+        if (cmd == "sync_rtc") s_ntpRequested = true;
+        s_statusDirty = true;
+        return;
+    }
     if (cmd == "start" || cmd == "play") {
         Timecode tc;
         if (!doc["tc"].isNull() && parseTc(doc["tc"] | "", tc)) {
@@ -344,7 +356,7 @@ void connectTask(void*) {
         }
 
         WiFi.mode(WIFI_STA);
-        WiFi.setSleep(false);
+        WiFi.setSleep(!s_cfg.lowLatency);
         const int n = WiFi.scanNetworks();
 
         xSemaphoreTake(s_mtx, portMAX_DELAY);

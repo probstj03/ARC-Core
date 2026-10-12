@@ -30,6 +30,11 @@ struct Config {
     const DefaultNetwork* defaults = nullptr;
     int defaultCount = 0;
     const char* arcNetPassword = "arc-net-2026";
+    // false for devices without LTC engine (e.g. ARC-Clock): status carries only the wall
+    // clock, engine commands are ignored, nothing touches arc::engine.
+    bool ltcEngine = true;
+    // false: WiFi modem sleep is allowed (saves power, adds latency). Timing devices keep true.
+    bool lowLatency = true;
     // Device hooks (all optional). onMessage returns true if it handled the message.
     bool (*onMessage)(const String& type, JsonDocument& doc, AsyncWebSocketClient* client) = nullptr;
     void (*fillStatus)(JsonDocument& doc) = nullptr;
