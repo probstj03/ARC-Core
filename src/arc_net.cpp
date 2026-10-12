@@ -159,7 +159,14 @@ int64_t atNs(JsonDocument& doc) {
 
 void handleCommand(JsonDocument& doc) {
     const String cmd = doc["cmd"] | "";
-    if (cmd == "start" || cmd == "play") engine::start(atNs(doc));
+    if (cmd == "start" || cmd == "play") {
+        Timecode tc;
+        if (!doc["tc"].isNull() && parseTc(doc["tc"] | "", tc)) {
+            engine::startWith(atNs(doc), tc, doc["speed"] | 1.0);
+        } else {
+            engine::start(atNs(doc));
+        }
+    }
     else if (cmd == "stop" || cmd == "pause") engine::stop(atNs(doc));
     else if (cmd == "reset") engine::setTimecode(Timecode());
     else if (cmd == "set_tc_mode") {

@@ -436,6 +436,13 @@ void start(int64_t atNs) {
     markStatus();
 }
 
+void startWith(int64_t atNs, const Timecode& tc, double speed) {
+    if (s_mode != Mode::RecordRun && s_mode != Mode::Playback) return;
+    if (!atNs) atNs = clock::nowNs();
+    s_gen.setTimeline(Timeline::anchored(s_rate, tcToFrames(tc, s_rate), atNs, speed > 0 ? speed : 1.0));
+    markStatus();
+}
+
 void stop(int64_t atNs) {
     if (s_mode != Mode::RecordRun && s_mode != Mode::Playback) return;
     if (!atNs) atNs = clock::nowNs();

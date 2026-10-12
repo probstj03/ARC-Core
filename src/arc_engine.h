@@ -54,6 +54,9 @@ TcRate rate();
 
 // Record Run (and Playback) transport. `atNs` schedules exactly on the wall clock.
 void start(int64_t atNs = 0);
+// Start at `atNs` with TC `tc` (frame running at that moment) and `speed`
+// (e.g. a slate following ARC-Play's song TC).
+void startWith(int64_t atNs, const Timecode& tc, double speed);
 void stop(int64_t atNs = 0);
 bool running();
 void setTimecode(const Timecode& tc);          // while stopped: frozen TC; running: re-anchor now
