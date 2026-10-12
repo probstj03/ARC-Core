@@ -10,12 +10,14 @@
 //   arc_engine     modes, transport, Jam Sync, loopback latency calibration
 //   arc_net        WiFi / ARC-Net, mDNS, WebSocket protocol v2
 //   arc_events     event log (LittleFS)
+//   arc_project    offline project (shot list in LittleFS) + log pull
 #include "arc_clock.h"
 #include "arc_engine.h"
 #include "arc_events.h"
 #include "arc_ltc_gen.h"
 #include "arc_ltc_in.h"
 #include "arc_net.h"
+#include "arc_project.h"
 #include "arc_timecode.h"
 #include "arc_timeline.h"
 #include "arc_userbits.h"

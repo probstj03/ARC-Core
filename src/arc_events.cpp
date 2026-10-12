@@ -35,6 +35,29 @@ uint32_t nextId() {
     return id;
 }
 
+uint32_t lastId() { return s_nextId > 0 ? s_nextId - 1 : 0; }
+
+void forEachAfter(uint32_t sinceId, bool (*fn)(JsonDocument& ev, void* ctx), void* ctx) {
+    if (!s_ok) return;
+    xSemaphoreTake(s_mtx, portMAX_DELAY);
+    bool go = true;
+    for (const char* name : {OLD, LOG}) {
+        if (!go) break;
+        File f = LittleFS.open(name, "r");
+        if (!f) continue;
+        while (go && f.available()) {
+            const String line = f.readStringUntil('\n');
+            if (line.length() < 2) continue;
+            JsonDocument ev;
+            if (deserializeJson(ev, line) != DeserializationError::Ok) continue;
+            if ((uint32_t)(ev["id"] | 0) <= sinceId) continue;
+            go = fn(ev, ctx);
+        }
+        f.close();
+    }
+    xSemaphoreGive(s_mtx);
+}
+
 void append(JsonDocument& event) {
     if (!s_ok) return;
     xSemaphoreTake(s_mtx, portMAX_DELAY);

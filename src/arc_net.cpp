@@ -11,6 +11,8 @@
 #include <vector>
 #include "arc_clock.h"
 #include "arc_engine.h"
+#include "arc_events.h"
+#include "arc_project.h"
 
 namespace arc {
 namespace net {
@@ -146,6 +148,9 @@ void sendHello(AsyncWebSocketClient* client) {
     JsonArray caps = doc["caps"].to<JsonArray>();
     for (int i = 0; i < s_cfg.capCount; i++) caps.add(s_cfg.caps[i]);
     doc["wifiHash"] = knownHash();
+    doc["projectCode"] = project::code();
+    doc["projectShots"] = project::shotCount();
+    doc["lastEventId"] = events::lastId();
     String out;
     serializeJson(doc, out);
     client->text(out);
@@ -233,6 +238,7 @@ void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client, AwsEventType type,
     if (deserializeJson(doc, (const char*)data, len) != DeserializationError::Ok) return;
     const String type_ = doc["type"] | "";
     if (s_cfg.onMessage && s_cfg.onMessage(type_, doc, client)) return;
+    if (project::handleMessage(type_, doc, client)) return;
 
     if (type_ == "command") handleCommand(doc);
     else if (type_ == "wifi_config") handleWifiConfig(doc);
