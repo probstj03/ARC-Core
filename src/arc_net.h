@@ -52,7 +52,7 @@ String ssid();
 String ipString();
 bool studioConnected();
 const String& deviceId();
-String statusLine();                  // "WLAN x 192.168.. | Studio verbunden"
+String statusLine();                  // "WiFi x 192.168.. | Studio connected"
 
 void broadcastStatus();
 void send(JsonDocument& doc);

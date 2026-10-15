@@ -448,13 +448,13 @@ String ipString() {
 String statusLine() {
     String line;
     switch (s_role) {
-        case Role::Station:      line = "WLAN " + s_ssid; break;
+        case Role::Station:      line = "WiFi " + s_ssid; break;
         case Role::ArcNetClient: line = "ARC-Net"; break;
-        case Role::ArcNetAp:     line = "ARC-Net (eigenes Netz)"; break;
-        default:                 line = "kein Netz"; break;
+        case Role::ArcNetAp:     line = "ARC-Net (own network)"; break;
+        default:                 line = "no network"; break;
     }
     line += " " + ipString();
-    line += studioConnected() ? "  |  Studio verbunden" : "  |  Studio getrennt";
+    line += studioConnected() ? "  |  Studio connected" : "  |  Studio disconnected";
     return line;
 }
 
